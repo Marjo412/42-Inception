@@ -1,0 +1,13 @@
+services:
+  mariadb:
+    build:
+      context: requierment/mariadb
+      dockefile: Dockerfile
+  nginx:
+    build:
+      context: requierment/nginx
+      dockefile: Dockerfile
+  wordpress:
+    build:
+      context: requierment/wordpress
+      dockefile: Dockerfile
