@@ -1,13 +1,17 @@
 services:
   mariadb:
+    # Build MariaDB image from its Dockerfile
     build:
       context: requierment/mariadb
       dockefile: Dockerfile
+    container_name: mariadb
   nginx:
     build:
       context: requierment/nginx
       dockefile: Dockerfile
+    container_name: nginx
   wordpress:
     build:
       context: requierment/wordpress
       dockefile: Dockerfile
+    container_name: wordpress

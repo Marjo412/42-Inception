@@ -17,3 +17,6 @@ Several websites were used to understand the different technical aspects of the 
 
 ### AI:
 AI was used in this project as an educational support to better understand concepts and clarify technical documentation, or for more detailed explanations.
+
+
+https://dev.to/alejiri/docker-nginx-wordpress-mariadb-tutorial-inception42-1eok
