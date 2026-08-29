@@ -1,44 +1,53 @@
+#indicates that the script must be run with Bash.
 #!/bin/bash
 
+#stops the script if a command fails.
 set -e
 
-echo "Starting MariaDB initialization..."
+echo "Starting MariaDB..."
 
-# Initialize MySQL data directory if it doesn't exist
+# Create directories needed by MariaDB
+mkdir -p /run/mysqld
+mkdir -p /var/log/mysql
+chown -R mysql:mysql /run/mysqld /var/log/mysql /var/lib/mysql
+
+# Initialize MariaDB only on the first launch
 if [ ! -d "/var/lib/mysql/mysql" ]; then
-    echo "Initializing data directory..."
+    echo "Initializing MariaDB..."
+
     mysql_install_db --user=mysql --datadir=/var/lib/mysql > /dev/null
-fi
 
-# Start the server (no networking for setup)
-echo "Starting temporary MariaDB server for setup..."
-mysqld --skip-networking --socket=/run/mysqld/mysqld.sock --user=mysql &
-pid="$!"
+    # Start MariaDB temporarily without network access
+    echo "Starting temporary MariaDB server..."
+    mysqld --skip-networking --socket=/run/mysqld/mysqld.sock --user=mysql &
+    pid="$!"
 
-# Wait for MariaDB to be ready
-echo "Waiting for MariaDB to be ready..."
-until mysqladmin --socket=/run/mysqld/mysqld.sock ping >/dev/null 2>&1; do
-    sleep 1
-done
-echo "MariaDB is ready!"
+    # Wait until MariaDB is ready
+    echo "Waiting for MariaDB..."
+    until mysqladmin --socket=/run/mysqld/mysqld.sock ping >/dev/null 2>&1; do
+        sleep 1
+    done
 
-# Run setup SQL: create database and users
-echo "Running setup SQL..."
-mysql --socket=/run/mysqld/mysqld.sock -u root << EOF
+    # Create WordPress database and user
+    echo "Creating database and user..."
+    mysql --socket=/run/mysqld/mysqld.sock -u root << EOF
 ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
-CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};
+CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\`;
 CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
-GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';
+GRANT ALL PRIVILEGES ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'%';
 FLUSH PRIVILEGES;
 EOF
 
-# Shut down temporary server
-echo "Shutting down temporary MariaDB..."
-mysqladmin --socket=/run/mysqld/mysqld.sock -u root -p"${MYSQL_ROOT_PASSWORD}" shutdown
+    # Stop temporary MariaDB server
+    echo "Stopping temporary MariaDB server..."
+    mysqladmin --socket=/run/mysqld/mysqld.sock \
+        -u root -p"${MYSQL_ROOT_PASSWORD}" shutdown
 
-# Wait for shutdown
-wait "$pid" || true
+    wait "$pid" || true
 
-# Start MariaDB normally (with networking)
-echo "Initialization complete. Starting MariaDB..."
-exec mysqld --user=mysql --datadir=/var/lib/mysql --socket=/run/mysqld/mysqld.sock
+    echo "MariaDB initialization complete."
+fi
+
+# Start MariaDB as the main container process
+echo "Starting MariaDB server..."
+exec mysqld --user=mysql --datadir=/var/lib/mysql
