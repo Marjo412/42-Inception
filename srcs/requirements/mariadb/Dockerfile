@@ -5,24 +5,20 @@ RUN apt-get update && apt-get install -y \
     mariadb-server \
     && rm -rf /var/lib/apt/lists/*
 
-# Create directories
-RUN mkdir -p /var/run/mysqld \
-    && chown -R mysql:mysql /var/run/mysqld \
-    && chmod 755 /var/run/mysqld
+# Create directories needed by MariaDB
+RUN mkdir -p /run/mysqld /var/log/mysql \
+    && chown -R mysql:mysql /run/mysqld /var/log/mysql \
+    && chmod 755 /run/mysqld
 
-# Copy configuration
-COPY conf/50-server.cnf /etc/mysql/mariadb.conf.d/
-COPY tools/init_db.sh /usr/local/bin/
+# Copy MariaDB configuration
+COPY conf/mariadb.conf /etc/mysql/mariadb.conf.d/50-server.cnf
 
-# Set permissions
-RUN chmod +x /usr/local/bin/init_db.sh
+# Copy initialization script
+COPY tools/mariadb.sh /usr/local/bin/mariadb.sh
 
-# Environment variables (can be overridden at runtime)
-ENV MYSQL_ROOT_PASSWORD=root \
-    MYSQL_DATABASE=app_db \
-    MYSQL_USER=app_user \
-    MYSQL_PASSWORD=app_pass
+# Make initialization script executable
+RUN chmod +x /usr/local/bin/mariadb.sh
 
 EXPOSE 3306
 
-ENTRYPOINT ["init_db.sh"]
+ENTRYPOINT ["/usr/local/bin/mariadb.sh"]
