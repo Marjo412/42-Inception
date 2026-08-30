@@ -1,61 +1,51 @@
 #!/bin/bash
+
 set -e
 
 WP_PATH="/var/www/html"
 
-# Read password from secret file
-if [ -n "$WORDPRESS_DB_PASSWORD_FILE" ] && [ -f "$WORDPRESS_DB_PASSWORD_FILE" ]; then
-    WORDPRESS_DB_PASSWORD=$(cat "$WORDPRESS_DB_PASSWORD_FILE")
-    export WORDPRESS_DB_PASSWORD
-fi
+# Read passwords from secrets
+MYSQL_PASSWORD=$(cat "$MYSQL_PASSWORD_FILE")
+WP_ADMIN_PASSWORD=$(cat "$WP_ADMIN_PASSWORD_FILE")
+WP_USER_PASSWORD=$(cat "$WP_USER_PASSWORD_FILE")
 
-echo "Setting up WordPress..."
+# Wait for MariaDB
+until mariadb -h mariadb -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" \
+    "$MYSQL_DATABASE" -e "SELECT 1;" > /dev/null 2>&1
+do
+    sleep 2
+done
 
-# Download and configure WordPress if not present
+# Install WordPress if needed
 if [ ! -f "$WP_PATH/wp-config.php" ]; then
-    echo "Downloading WordPress..."
-    wget -q https://wordpress.org/latest.tar.gz -O /tmp/wordpress.tar.gz
-    tar -xzf /tmp/wordpress.tar.gz -C /tmp
-    rm /tmp/wordpress.tar.gz
 
-    # Copy only missing files (avoid overwriting existing content)
-    cp -rn /tmp/wordpress/* "$WP_PATH" || true
-    rm -rf /tmp/wordpress
+    wp core download --allow-root
 
-    # Fetch security salts from WordPress API
-    WP_SALTS=$(wget -qO- https://api.wordpress.org/secret-key/1.1/salt/)
+    wp config create \
+        --dbname="$MYSQL_DATABASE" \
+        --dbuser="$MYSQL_USER" \
+        --dbpass="$MYSQL_PASSWORD" \
+        --dbhost="mariadb:3306" \
+        --allow-root
 
-    # Create wp-config.php
-    cat > "$WP_PATH/wp-config.php" << EOF
-<?php
-define('DB_NAME', '${WORDPRESS_DB_NAME}');
-define('DB_USER', '${WORDPRESS_DB_USER}');
-define('DB_PASSWORD', '${WORDPRESS_DB_PASSWORD}');
-define('DB_HOST', '${WORDPRESS_DB_HOST}');
-define('DB_CHARSET', 'utf8');
-define('DB_COLLATE', '');
-
-\$table_prefix = '${WORDPRESS_TABLE_PREFIX:-wp_}';
-
-${WP_SALTS}
-
-define('WP_DEBUG', false);
-
-if ( !defined('ABSPATH') )
-    define('ABSPATH', __DIR__ . '/');
-
-require_once ABSPATH . 'wp-settings.php';
-EOF
-
-    # Set secure permissions
-    find "$WP_PATH" -type d -exec chmod 750 {} \;
-    find "$WP_PATH" -type f -exec chmod 640 {} \;
-    chown -R www-data:www-data "$WP_PATH"
-
-    echo "WordPress setup complete."
-else
-    echo "WordPress already initialized, skipping setup."
+    wp core install \
+        --url="$WP_URL" \
+        --title="$WP_TITLE" \
+        --admin_user="$WP_ADMIN_USER" \
+        --admin_password="$WP_ADMIN_PASSWORD" \
+        --admin_email="$WP_ADMIN_EMAIL" \
+        --skip-email \
+        --allow-root
 fi
 
-echo "Starting PHP-FPM..."
+# Create second WordPress user if needed
+if ! wp user get "$WP_USER" --allow-root > /dev/null 2>&1; then
+    wp user create "$WP_USER" "$WP_USER_EMAIL" \
+        --user_pass="$WP_USER_PASSWORD" \
+        --role=author \
+        --allow-root
+fi
+
+chown -R www-data:www-data "$WP_PATH"
+
 exec php-fpm8.2 -F

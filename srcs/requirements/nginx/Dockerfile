@@ -1,24 +1,23 @@
-FROM debian:bullseye
+FROM debian:bookworm
 
-# Install nginx and openssl
+# Install NGINX and OpenSSL
 RUN apt-get update && apt-get install -y \
     nginx \
     openssl \
     && rm -rf /var/lib/apt/lists/*
 
-# Ensure nginx runs as www-data with correct UID
-RUN usermod -u 33 www-data && groupmod -g 33 www-data
-
 # Create SSL directory
 RUN mkdir -p /etc/nginx/ssl
 
-# Copy configuration files
-COPY conf/nginx.conf /etc/nginx/nginx.conf
-COPY tools/generate_ssl.sh /usr/local/bin/
+# Generate self-signed SSL certificate
+RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /etc/nginx/ssl/nginx.key \
+    -out /etc/nginx/ssl/nginx.crt \
+    -subj "/CN=mrosset.42.fr"
 
-# Set permissions
-RUN chmod +x /usr/local/bin/*.sh
+# Copy NGINX configuration
+COPY conf/nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 443
 
-ENTRYPOINT ["/usr/local/bin/generate_ssl.sh"]
+CMD ["nginx", "-g", "daemon off;"]
