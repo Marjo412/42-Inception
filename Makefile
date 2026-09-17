@@ -1,14 +1,34 @@
 NAME = inception
 
-## Build and start all Docker containers in the background
-all:
-	docker compose -f srcs/docker-compose.yml up --build -d
-## programm's name, file, path, create and start the infrastructure, construction, detached mode
+COMPOSE = docker compose -f srcs/docker-compose.yml
 
-clean:
+DATA_PATH = /home/mrosset/data
+MARIADB_DATA = $(DATA_PATH)/mariadb
+WORDPRESS_DATA = $(DATA_PATH)/wordpress
 
+# Prepare directories for persistent data
+prepare:
+	mkdir -p $(MARIADB_DATA)
+	mkdir -p $(WORDPRESS_DATA)
+
+# Prepare, build and start the infrastructure
+all: prepare
+	$(COMPOSE) up --build -d
+
+# Stop and remove containers and network
+down:
+	$(COMPOSE) down
+
+# Stop the infrastructure
+clean: down
+
+# Remove the whole infrastructure and persistent data
 fclean: clean
+	$(COMPOSE) down --rmi all -v
+	rm -rf $(MARIADB_DATA)
+	rm -rf $(WORDPRESS_DATA)
 
+# Completely rebuild the infrastructure
 re: fclean all
 
-.PHONY all clean fclean re
+.PHONY: all prepare down clean fclean re
