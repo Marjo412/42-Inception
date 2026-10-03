@@ -1,6 +1,6 @@
 NAME = inception
 
-COMPOSE = docker compose -f srcs/docker-compose.yml
+COMPOSE = docker compose --env-file srcs/.env -f srcs/docker-compose.yml
 
 DATA_PATH = /home/mrosset/data
 MARIADB_DATA = $(DATA_PATH)/mariadb
