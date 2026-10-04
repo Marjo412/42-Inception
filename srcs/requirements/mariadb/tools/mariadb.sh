@@ -1,5 +1,5 @@
-#indicates that the script must be run with Bash.
 #!/bin/bash
+#indicates that the script must be run with Bash.
 
 #stops the script if a command fails.
 set -e

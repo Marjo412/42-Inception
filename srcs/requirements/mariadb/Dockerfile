@@ -5,6 +5,9 @@ RUN apt-get update && apt-get install -y \
     mariadb-server \
     && rm -rf /var/lib/apt/lists/*
 
+# Remove default database initialized during package installation
+RUN rm -rf /var/lib/mysql/*
+
 # Create directories needed by MariaDB
 RUN mkdir -p /run/mysqld /var/log/mysql \
     && chown -R mysql:mysql /run/mysqld /var/log/mysql \
