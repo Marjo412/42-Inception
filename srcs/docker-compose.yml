@@ -68,7 +68,18 @@ networks:
 
 volumes:
   mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/mrosset/data/mariadb
+
   wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/mrosset/data/wordpress
 
 secrets:
   db_root_password:
