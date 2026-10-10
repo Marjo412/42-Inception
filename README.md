@@ -1,10 +1,16 @@
 **This project has been created as part of the 42 curriculum by mrosset**
 
 ## Description
- Virtual Machines vs Docker
-◦ Secrets vs Environment Variables
-◦ Docker Network vs Host Network
-◦ Docker Volumes vs Bind Mounts
+
+Inception is a system administration project from the 42 curriculum. Its objective is to create and configure a small infrastructure using Docker and Docker Compose inside a virtual machine.
+
+The infrastructure includes three main services, each built from a custom Dockerfile using Alpine Linux:
+
+- **NGINX:** A web server configured with TLS to handle secure HTTPS connections.
+- **WordPress:** A content management system (CMS) running with PHP-FPM.
+- **MariaDB:** A relational database management system used to store WordPress data.
+
+Docker Compose manages the containers, their communication through a dedicated Docker network, and persistent storage using Docker volumes.
 
 ---
 
@@ -34,7 +40,17 @@ With Compose, we can create a YAML file to define services and, with a single co
 ---
 
 ## Ressources
-Several websites were used to understand the different technical aspects of the project.
+Several resources were used to understand the technical concepts and implementation of this project.
+
+### Official documentation
+
+- [Docker documentation](https://docs.docker.com/)
+- [Docker Compose documentation](https://docs.docker.com/compose/)
+- [Dockerfile reference](https://docs.docker.com/reference/dockerfile/)
+- [NGINX documentation](https://nginx.org/en/docs/)
+- [MariaDB documentation](https://mariadb.com/docs/)
+- [WordPress documentation](https://wordpress.org/documentation/)
+- [Debian documentation](https://www.debian.org/doc/)
 
 ### Learn Docker :
     - https://www.youtube.com/playlist?list=PLpLG--nxBMd-wO_MAWh3gzqCcFh4qNMvP
@@ -42,7 +58,7 @@ Several websites were used to understand the different technical aspects of the 
 ### Docker commands:
     - https://www.hostinger.com/fr/tutoriels/cheat-sheet-docker/
 
-### Inception tuto :
+### Inception tutorials :
     - https://inception.cluzet.fr/
     - https://dev.to/alejiri/docker-nginx-wordpress-mariadb-tutorial-inception42-1eok
 
@@ -50,4 +66,7 @@ Several websites were used to understand the different technical aspects of the 
     - https://www.debian.org/releases/index.fr.html
 
 ### AI:
-AI was used in this project as an educational support to better understand concepts and clarify technical documentation, or for more detailed explanations.
+
+AI tools were used as educational support throughout this project. They helped clarify technical concepts, explain Docker and networking mechanisms, understand configuration files, and interpret technical documentation.
+
+AI was also used to assist with troubleshooting and improve the clarity of documentation. The infrastructure was configured, tested, and validated through practical implementation and reference to technical resources.
