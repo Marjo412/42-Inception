@@ -107,30 +107,128 @@ Main differences:
 
 ## Instructions
 
-### Docker-Compose :
-Docker Compose is a tool developed to help define and share multi-container applications.
-With Compose, we can create a YAML file to define services and, with a single command, start or stop everything.
+### Requirements
 
-### TLS :
-"Transport Layer Security" is a protocol for securing exchanges over computer networks, particularly over the Internet.
+- A Linux virtual machine (Debian in this project).
+- Docker Engine.
+- Docker Compose.
+- GNU Make.
+- A domain name configured to resolve to the virtual machine's IP address.
 
-### Dockerfile keywords :
-    - FROM -> This tells Docker which operating system your virtual machine should run on.
-                It's the first keyword in your Dockerfile and is mandatory.
-    - RUN -> Allows you to run a command on your virtual machine
-    - COPY -> This allows you to copy a file. You simply specify the location of the file you
-                want to copy from the directory containing your Dockerfile, and then the location
-                where you want to copy it within your virtual machine.
-    - EXPOSE -> Informs Docker that the container is listening on the specified network ports at
-                runtime and makes it available only for communication between containers.
-                **Note:** For the WordPress server to communicate with the MariaDB container, it is important
-                that both containers run in the same Docker network.
-    - ENTRYPOINT -> This instructs the container to execute a specific command when it starts. Simply specify your
-                    command, argument by argument.
+### Configuration
+
+Before starting the infrastructure, the required configuration files must be present.
+
+The `.env` file contains environment variables used by Docker Compose. The `secrets/` directory contains files used to provide sensitive credentials to the containers.
+
+These files must be configured before starting the services. Sensitive information, including passwords and secrets, must not be committed to the Git repository.
+
+### Build and run
+
+The infrastructure is managed using the Makefile located at the root of the project.
+
+To build the Docker images and start the containers:
+
+```bash
+make all
+```
+
+To verify that the containers are running:
+
+```bash
+docker ps
+```
+
+To display the Docker Compose services:
+
+```bash
+docker compose -f srcs/docker-compose.yml ps
+```
+
+To view the logs:
+
+```bash
+docker compose -f srcs/docker-compose.yml logs
+```
+
+To view the logs of a specific service:
+
+```bash
+docker logs nginx
+docker logs wordpress
+docker logs mariadb
+```
+
+### Access the website
+
+Once the infrastructure is running, WordPress can be accessed through the configured domain name using HTTPS:
+
+```text
+https://<your-login>.42.fr
+```
+
+The browser connects to NGINX through port 443, and NGINX forwards the appropriate requests to WordPress.
+
+### Data persistence
+
+Two Docker volumes are used:
+
+- `mariadb_data`: Stores the MariaDB database files.
+- `wordpress_data`: Stores the WordPress website files.
+
+These volumes allow data to persist when containers are stopped, removed, or recreated, provided the volumes and their underlying data are preserved.
+
+### Docker Compose
+
+Docker Compose is a tool used to define and manage multi-container applications. It uses a YAML configuration file, `docker-compose.yml`, to describe the services, networks, volumes, and other settings required by the application.
+
+With a single command, Docker Compose can build, start, stop, and manage the entire infrastructure.
+
+In this project, Docker Compose manages NGINX, WordPress, and MariaDB.
+
+### TLS
+
+**TLS (Transport Layer Security)** is a cryptographic protocol used to secure communications over a computer network.
+
+It provides:
+
+- **Encryption:** Protects data exchanged between the client and server.
+- **Authentication:** Allows the client to verify the server's identity through its certificate.
+- **Integrity:** Helps detect unauthorized modifications to transmitted data.
+
+In this project, NGINX is configured to accept HTTPS connections using TLS 1.2 and TLS 1.3.
+
+### Dockerfile keywords
+
+A Dockerfile contains instructions used to build a Docker image.
+
+- **FROM:** Defines the base image used to build the Docker image. In this project, Alpine Linux is used.
+- **RUN:** Executes commands during the image build process, such as installing packages or configuring services.
+- **COPY:** Copies files or directories from the build context into the Docker image.
+- **EXPOSE:** Documents the network ports on which the containerized application is expected to listen. It does not automatically publish these ports to the host.
+- **ENTRYPOINT:** Defines the executable that runs when the container starts.
+- **CMD:** Specifies the default command or arguments executed when the container starts.
+- **WORKDIR:** Defines the working directory for subsequent Dockerfile instructions.
+
+### Docker Compose commands
+
+| Command | Description |
+|---|---|
+| `docker compose up -d` | Start services in the background |
+| `docker compose up --build -d` | Build images and start services |
+| `docker compose down` | Stop and remove containers and networks |
+| `docker compose ps` | Display the status of services |
+| `docker compose logs` | Display service logs |
+| `docker volume ls` | List Docker volumes |
+| `docker network ls` | List Docker networks |
+| `docker images` | List available Docker images |
+
+Docker Compose commands must be executed from the directory containing `docker-compose.yml`, or with the `-f` option to specify its location.
 
 ---
 
 ## Ressources
+
 Several resources were used to understand the technical concepts and implementation of this project.
 
 ### Official documentation
