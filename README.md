@@ -12,6 +12,97 @@ The infrastructure includes three main services, each built from a custom Docker
 
 Docker Compose manages the containers, their communication through a dedicated Docker network, and persistent storage using Docker volumes.
 
+### Infrastructure
+
+```text
+                  USER
+                   |
+               HTTPS (443)
+                   |
+              +---------+
+              |  NGINX  |
+              |   TLS   |
+              +---------+
+                   |
+               PHP-FPM
+                   |
+              +-----------+
+              | WordPress |
+              | Port 9000 |
+              +-----------+
+                   |
+                  SQL
+                   |
+              +---------+
+              | MariaDB |
+              |Port 3306|
+              +---------+
+```
+
+All three containers communicate through a dedicated Docker network. Only NGINX is accessible from outside the Docker infrastructure, through port 443. WordPress and MariaDB are not directly exposed to the host.
+
+### Technical choices and comparisons
+
+#### Virtual Machines vs Docker
+
+**Virtual machines (VMs)** simulate complete computers, including their own operating systems and virtualized hardware. They run through a hypervisor such as VirtualBox.
+
+**Docker containers** share the host operating system's kernel and isolate applications and their dependencies.
+
+Main differences:
+
+- Virtual machines require a complete guest operating system, while containers share the host kernel.
+- Containers are generally lighter and faster to start.
+- Virtual machines provide stronger isolation through hardware virtualization.
+- Docker simplifies application deployment and reproducibility.
+
+**In this project:** A Debian virtual machine is used as the host environment, while Docker containers run the different services.
+
+#### Secrets vs Environment Variables
+
+**Environment variables** configure applications without hardcoding configuration values directly into source code. They are suitable for non-sensitive information such as database names, usernames, and domain names.
+
+**Docker secrets** provide sensitive information, such as passwords, to containers.
+
+Main differences:
+
+- Environment variables are accessible through the container's environment.
+- Docker Compose secrets are mounted as files inside containers, typically under `/run/secrets/`.
+- Secrets help avoid exposing passwords directly through environment variables.
+- Both require appropriate access controls and must be protected from accidental publication.
+
+**In this project:** Environment variables configure the services, while Docker secrets manage sensitive credentials.
+
+#### Docker Network vs Host Network
+
+**Docker networks** allow containers to communicate while maintaining network isolation. With a user-defined bridge network, containers can communicate using their service names.
+
+**Host networking** allows a container to share the host's network namespace directly.
+
+Main differences:
+
+- Bridge networks provide network isolation between containers and the host.
+- Host networking uses the host's network interfaces directly.
+- Bridge networks allow explicit port publishing.
+- Host networking removes the need for port mapping but reduces network isolation.
+
+**In this project:** A dedicated Docker bridge network connects NGINX, WordPress, and MariaDB.
+
+#### Docker Volumes vs Bind Mounts
+
+**Docker volumes** are persistent storage resources managed by Docker.
+
+**Bind mounts** map a specific directory or file from the host filesystem into a container.
+
+Main differences:
+
+- Docker volumes are managed through Docker.
+- Bind mounts depend on specific paths on the host.
+- Both can preserve data independently of a container's lifecycle.
+- Volumes are generally convenient for managing application data.
+
+**In this project:** Docker named volumes are used for MariaDB and WordPress data persistence, with storage paths configured on the host.
+
 ---
 
 ## Instructions
